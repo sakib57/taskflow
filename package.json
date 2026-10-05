@@ -1,8 +1,16 @@
 {
-  "name": "@taskflow/source",
-  "version": "0.0.0",
+  "name": "taskflow",
+  "author": "Nazmus Sakib",
+  "version": "1.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "dev": "docker compose -f infra/docker/docker-compose.yaml up -d",
+    "dev:down": "docker compose -f infra/docker/docker-compose.yml down",
+    "dev:logs": "docker compose -f infra/docker/docker-compose.yml logs -f",
+    "lint": "nx run-many --target=lint --all",
+    "test": "nx run-many --target=test --all",
+    "build": "nx run-many --target=build --all"
+  },
   "private": true,
   "dependencies": {},
   "devDependencies": {
