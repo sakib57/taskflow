@@ -1,0 +1,201 @@
+version: '3.9'
+
+networks:
+  taskflow:
+    driver: bridge
+
+volumes:
+  postgres_auth_data:
+  postgres_user_data:
+  postgres_task_data:
+  mongo_notification_data:
+  mongo_analytics_data:
+  elasticsearch_data:
+  redis_data:
+  rabbitmq_data:
+
+services:
+  # ============================================
+  # PostgreSQL (per service database)
+  # ============================================
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: taskflow-postgres-auth
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow_secret
+      POSTGRES_DB: auth_db
+
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-user:
+    image: postgres:16-alpine
+    container_name: taskflow-postgres-user
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow_secret
+      POSTGRES_DB: user_db
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-task:
+    image: postgres:16-alpine
+    container_name: taskflow-postgres-task
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow_secret
+      POSTGRES_DB: task_db
+    ports:
+      - '5435:5432'
+    volumes:
+      - postgres_task_data:/var/lib/postgresql/data
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # ============================================
+  # MongoDB (notification, analytics)
+  # ============================================
+  mongodb-notification:
+    image: mongo:7
+    container_name: taskflow-mongo-notification
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: taskflow
+      MONGO_INITDB_ROOT_PASSWORD: taskflow_secret
+      MONGO_INITDB_DATABASE: notification_db
+    ports:
+      - '27018:27017'
+    volumes:
+      - mongo_notification_data:/data/db
+    networks:
+      - taskflow
+
+  mongodb-analytics:
+    image: mongo:7
+    container_name: taskflow-mongo-analytics
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: taskflow
+      MONGO_INITDB_ROOT_PASSWORD: taskflow_secret
+      MONGO_INITDB_DATABASE: analytics_db
+    ports:
+      - '27019:27017'
+    volumes:
+      - mongo_analytics_data:/data/db
+    networks:
+      - taskflow
+
+  # ============================================
+  # Redis (cache, session, rate limit)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: taskflow-redis
+    command: redis-server --appendonly yes --requirepass taskflow_redis
+    ports:
+      - '6380:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD', 'redis-cli', '--raw', 'incr', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # RabbitMQ (message broker)
+  # ============================================
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: taskflow-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: taskflow
+      RABBITMQ_DEFAULT_PASS: taskflow_rabbit
+      RABBITMQ_DEFAULT_VHOST: taskflow
+    ports:
+      - '5673:5672' # AMQP
+      - '15673:15672' # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================
+  # Elasticsearch (search)
+  # ============================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: taskflow-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+    ports:
+      - '9200:9200'
+      - '9300:9300'
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - taskflow
+    healthcheck:
+      test:
+        ['CMD-SHELL', 'curl -f http://localhost:9200/_cluster/health || exit 1']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================
+  # Kibana (Elasticsearch UI — optional)
+  # ============================================
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: taskflow-kibana
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    ports:
+      - '5601:5601'
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - taskflow
+
+  # ============================================
+  # Mailhog (email testing — optional)
+  # ============================================
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: taskflow-mailhog
+    ports:
+      - '1025:1025' # SMTP
+      - '8025:8025' # Web UI
+    networks:
+      - taskflow
