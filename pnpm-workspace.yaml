@@ -1,10 +1,12 @@
 packages:
   - 'packages/*'
   - 'libs/*'
+  - 'apps/*'
 autoInstallPeers: true
 allowBuilds:
   nx: true
   unrs-resolver: false
   '@swc/core': false
-  '@parcel/watcher': set this to true or false
+  '@parcel/watcher': 'set this to true or false'
   '@nestjs/core': false
+  bcrypt: set this to true or false
