@@ -49,3 +49,4 @@ poetry.lock
 # Test
 coverage/
 .nyc_output/
+test-output

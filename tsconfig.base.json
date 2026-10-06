@@ -16,6 +16,11 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "es2022",
-    "customConditions": ["@taskflow/source"]
+    "customConditions": ["@taskflow/source"],
+    "paths": {
+      "@taskflow/shared-types": ["libs/shared-types/src/index.ts"],
+      "@taskflow/shared-utils": ["libs/shared-utils/src/index.ts"],
+      "@taskflow/auth-lib": ["libs/auth-lib/src/index.ts"]
+    }
   }
 }
