@@ -1,0 +1,167 @@
+version: '3.9'
+
+networks:
+  taskflow:
+    driver: bridge
+
+volumes:
+  postgres_auth_data:
+  postgres_user_data:
+  postgres_task_data:
+  mongo_notification_data:
+  redis_data:
+  rabbitmq_data:
+  adminer_data:
+
+services:
+  # ============================================
+  # PostgreSQL Databases (per service)
+  # ============================================
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: taskflow-postgres-auth
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow_secret
+      POSTGRES_DB: auth_db
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-user:
+    image: postgres:16-alpine
+    container_name: taskflow-postgres-user
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow_secret
+      POSTGRES_DB: user_db
+    ports:
+      - '5434:5432'
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-task:
+    image: postgres:16-alpine
+    container_name: taskflow-postgres-task
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow_secret
+      POSTGRES_DB: task_db
+    ports:
+      - '5435:5432'
+    volumes:
+      - postgres_task_data:/var/lib/postgresql/data
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # ============================================
+  # MongoDB (Notifications + future services)
+  # ============================================
+  mongodb-notification:
+    image: mongo:7
+    container_name: taskflow-mongodb-notification
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: taskflow
+      MONGO_INITDB_ROOT_PASSWORD: taskflow_mongo
+      MONGO_INITDB_DATABASE: notification_db
+    ports:
+      - '27018:27017'
+    volumes:
+      - mongo_notification_data:/data/db
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Redis
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: taskflow-redis
+    command: redis-server --appendonly yes --requirepass taskflow_redis
+    ports:
+      - '6380:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - taskflow
+
+  # ============================================
+  # RabbitMQ
+  # ============================================
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: taskflow-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: taskflow
+      RABBITMQ_DEFAULT_PASS: taskflow_rabbit
+      RABBITMQ_DEFAULT_VHOST: taskflow
+    ports:
+      - '5673:5672'
+      - '15673:15672'
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ============================================
+  # Adminer (PostgreSQL UI)
+  # ============================================
+  adminer:
+    image: adminer:latest
+    container_name: taskflow-adminer
+    ports:
+      - '8081:8080'
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres-task
+    networks:
+      - taskflow
+    depends_on:
+      - postgres-auth
+      - postgres-user
+      - postgres-task
+  # ============================================
+  # Mongo Express (MongoDB UI)
+  # ============================================
+  mongo-express:
+    image: mongo-express:latest
+    container_name: taskflow-mongo-express
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: taskflow
+      ME_CONFIG_MONGODB_ADMINPASSWORD: taskflow_mongo
+      ME_CONFIG_MONGODB_URL: mongodb://taskflow:taskflow_mongo@mongodb-notification:27017/
+      ME_CONFIG_BASICAUTH: false
+    ports:
+      - '8082:8081'
+    networks:
+      - taskflow
+    depends_on:
+      - mongodb-notification

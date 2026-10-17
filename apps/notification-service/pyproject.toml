@@ -1,0 +1,39 @@
+[project]
+name = "notification-service"
+version = "0.1.0"
+description = "TaskFlow Notification Service"
+readme = "README.md"
+authors = [
+    { name = "Nazmus Sakib", email = "sakib.tnt@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "aio-pika>=10.1.1",
+    "fastapi>=0.143.1",
+    "httpx>=0.28.1",
+    "motor>=3.7.1",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.0",
+    "python-dotenv>=1.2.4",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+notification-service = "notification_service:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.0",
+]

@@ -1,0 +1,37 @@
+{
+  "name": "task-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/task-service/src",
+  "projectType": "application",
+  "tags": ["type:app", "scope:task"],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{workspaceRoot}/dist/apps/task-service"],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/task-service",
+        "main": "apps/task-service/src/main.ts",
+        "tsConfig": "apps/task-service/tsconfig.app.json",
+        "assets": [
+          {
+            "input": "apps/task-service/src/assets",
+            "glob": "**/*",
+            "output": "assets"
+          }
+        ],
+        "webpackConfig": "apps/task-service/webpack.config.js"
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "task-service:build",
+        "runBuildTargetDependencies": false
+      }
+    }
+  }
+}

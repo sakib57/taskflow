@@ -1,0 +1,15 @@
+{
+  "name": "auth-lib",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/auth-lib/src",
+  "projectType": "library",
+  "tags": ["type:lib", "scope:auth"],
+  "targets": {
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "options": {
+        "lintFilePatterns": ["libs/auth-lib/**/*.ts"]
+      }
+    }
+  }
+}

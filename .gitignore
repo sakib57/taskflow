@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+build/
+out/
+apps/*/dist/
+libs/*/dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Nx
+.nx/cache
+.nx/workspace-data
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+.nyc_output/
+
+# Python (future)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/

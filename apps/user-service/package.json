@@ -1,0 +1,29 @@
+{
+  "name": "@taskflow/user-service",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@nestjs/swagger": "^8.0.0",
+    "@nestjs/typeorm": "^11.0.0",
+    "@taskflow/auth-lib": "workspace:*",
+    "@taskflow/shared-types": "workspace:*",
+    "@taskflow/shared-utils": "workspace:*",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "ioredis": "^5.3.2",
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.3.0",
+    "typeorm": "^0.3.19"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "^11.0.0",
+    "@types/express": "^5.0.0"
+  }
+}

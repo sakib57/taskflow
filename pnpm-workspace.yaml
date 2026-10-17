@@ -1,0 +1,14 @@
+packages:
+  - 'apps/*'
+  - 'libs/*'
+
+autoInstallPeers: true
+strictPeerDependencies: false
+injectWorkspacePackages: true
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@scarf/scarf': true
+  '@swc/core': true
+  bcrypt: true
+  nx: true
