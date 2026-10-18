@@ -1,0 +1,38 @@
+[project]
+name = "search-service"
+version = "0.1.0"
+description = "TaskFlow Search Service"
+readme = "README.md"
+authors = [
+    { name = "Nazmus Sakib", email = "sakib.tnt@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "aio-pika>=10.1.1",
+    "elasticsearch[async]>=8.11,<9",
+    "fastapi>=0.143.3",
+    "httpx>=0.28.1",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.0",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[project.scripts]
+search-service = "search_service:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.17.0",
+]
