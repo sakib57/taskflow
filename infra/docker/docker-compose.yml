@@ -13,6 +13,7 @@ volumes:
   rabbitmq_data:
   elasticsearch_data:
   adminer_data:
+  kong_data:
 
 services:
   # ============================================
@@ -210,3 +211,83 @@ services:
       - taskflow
     depends_on:
       - mongodb-notification
+
+  # ============================================
+  # Kong API Gateway
+  # ============================================
+  kong-database:
+    image: postgres:9.6-alpine
+    container_name: taskflow-kong-db
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_DB: kong
+      POSTGRES_PASSWORD: kong_secret
+    volumes:
+      - kong_data:/var/lib/postgresql/data
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'kong']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kong-migrations:
+    image: kong:3.6
+    container_name: taskflow-kong-migrations
+    command: 'kong migrations bootstrap'
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong_secret
+    networks:
+      - taskflow
+    depends_on:
+      kong-database:
+        condition: service_healthy
+    restart: on-failure
+
+  kong:
+    image: kong:3.6
+    container_name: taskflow-kong
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_USER: kong
+      KONG_PG_PASSWORD: kong_secret
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+      KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_GUI_URL: http://localhost:8002
+    ports:
+      - '8000:8000' # Kong Proxy (Frontend এখানে হিট করবে)
+      - '8001:8001' # Kong Admin API (CLI/UI থেকে কনফিগার করব)
+      - '8443:8443' # Kong Proxy SSL
+      - '8444:8444' # Kong Admin SSL
+    networks:
+      - taskflow
+    depends_on:
+      kong-migrations:
+        condition: service_completed_successfully
+
+  konga:
+    image: pantsel/konga:latest
+    container_name: taskflow-konga
+    environment:
+      NODE_ENV: production
+      DB_ADAPTER: postgres
+      DB_HOST: kong-database
+      DB_USER: kong
+      DB_PASSWORD: kong_secret
+      DB_DATABASE: konga
+    ports:
+      - '1337:1337' # Konga UI
+    networks:
+      - taskflow
+    depends_on:
+      kong:
+        condition: service_started
