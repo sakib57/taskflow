@@ -8,6 +8,12 @@
     "infra:logs": "docker compose -f infra/docker/docker-compose.yml logs -f",
     "build:auth": "nx build auth-service",
     "serve:auth": "nx serve auth-service",
+    "build:user": "nx build user-service",
+    "serve:user": "nx serve user-service",
+    "build:task": "nx build task-service",
+    "serve:task": "nx serve task-service",
+    "build:payment": "nx build payment-service",
+    "serve:payment": "nx serve payment-service",
     "build:all": "nx run-many --target=build --all",
     "clean": "nx reset && rm -rf dist",
     "clean:dist": "rm -rf dist apps/*/dist libs/*/dist"

@@ -8,6 +8,7 @@ volumes:
   postgres_auth_data:
   postgres_user_data:
   postgres_task_data:
+  postgres_payment_data:
   mongo_notification_data:
   redis_data:
   rabbitmq_data:
@@ -68,6 +69,25 @@ services:
       - '5435:5432'
     volumes:
       - postgres_task_data:/var/lib/postgresql/data
+    networks:
+      - taskflow
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-payment:
+    image: postgres:16-alpine
+    container_name: taskflow-postgres-payment
+    environment:
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: taskflow_secret
+      POSTGRES_DB: payment_db
+    ports:
+      - '5436:5432'
+    volumes:
+      - postgres_payment_data:/var/lib/postgresql/data
     networks:
       - taskflow
     healthcheck:
@@ -262,10 +282,12 @@ services:
       KONG_ADMIN_ERROR_LOG: /dev/stderr
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
       KONG_PROXY_LISTEN: 0.0.0.0:8000
+      KONG_ADMIN_GUI_PATH: /
       KONG_ADMIN_GUI_URL: http://localhost:8002
     ports:
       - '8000:8000' # Kong Proxy (Frontend এখানে হিট করবে)
       - '8001:8001' # Kong Admin API (CLI/UI থেকে কনফিগার করব)
+      - '8002:8002'
       - '8443:8443' # Kong Proxy SSL
       - '8444:8444' # Kong Admin SSL
     networks:
@@ -273,21 +295,3 @@ services:
     depends_on:
       kong-migrations:
         condition: service_completed_successfully
-
-  konga:
-    image: pantsel/konga:latest
-    container_name: taskflow-konga
-    environment:
-      NODE_ENV: production
-      DB_ADAPTER: postgres
-      DB_HOST: kong-database
-      DB_USER: kong
-      DB_PASSWORD: kong_secret
-      DB_DATABASE: konga
-    ports:
-      - '1337:1337' # Konga UI
-    networks:
-      - taskflow
-    depends_on:
-      kong:
-        condition: service_started

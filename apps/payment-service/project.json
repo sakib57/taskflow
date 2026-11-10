@@ -1,0 +1,37 @@
+{
+  "name": "payment-service",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/payment-service/src",
+  "projectType": "application",
+  "tags": ["type:app", "scope:payment"],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{workspaceRoot}/dist/apps/payment-service"],
+      "options": {
+        "target": "node",
+        "compiler": "tsc",
+        "outputPath": "dist/apps/payment-service",
+        "main": "apps/payment-service/src/main.ts",
+        "tsConfig": "apps/payment-service/tsconfig.app.json",
+        "assets": [
+          {
+            "input": "apps/payment-service/src/assets",
+            "glob": "**/*",
+            "output": "assets"
+          }
+        ],
+        "webpackConfig": "apps/payment-service/webpack.config.js"
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "payment-service:build",
+        "runBuildTargetDependencies": false
+      }
+    }
+  }
+}
